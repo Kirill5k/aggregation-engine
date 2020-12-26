@@ -12,9 +12,10 @@ import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{HttpRoutes, MessageFailure, Response}
 
-final class EnquiryController[F[_]: Sync](
+final class EnquiryController[F[_]](
     service: EnquiryService[F]
 )(implicit
+    F: Sync[F],
     l: Logger[F]
 ) extends Http4sDsl[F] with JsonCodecs {
 
@@ -29,7 +30,8 @@ final class EnquiryController[F[_]: Sync](
       }
     case GET -> Root / "enquiries" / id / "quotes" =>
       withErrorHandling {
-        Ok(service.getQuotes(EnquiryId(id)))
+        F.ensure(service.exists(EnquiryId(id)))(EnquiryNotFound(EnquiryId(id)))(identity) *>
+          Ok(service.getQuotes(EnquiryId(id)))
       }
   }
 
