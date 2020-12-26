@@ -24,7 +24,7 @@ final class EnquiryController[F[_]: Sync](
         for {
           reqBody <- req.as[CreateEnquiryRequest]
           id      <- service.create(reqBody.query)
-          res     <- Ok(CreateEnquiryResponse(id))
+          res     <- Created(CreateEnquiryResponse(id))
         } yield res
       }
     case GET -> Root / "enquiries" / id / "quotes" =>
