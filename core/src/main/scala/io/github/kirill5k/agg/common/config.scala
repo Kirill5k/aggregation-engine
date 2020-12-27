@@ -1,7 +1,6 @@
 package io.github.kirill5k.agg.common
 
 import cats.effect.{Blocker, ContextShift, Sync}
-import pureconfig._
 import pureconfig.generic.auto._
 import pureconfig.module.catseffect.syntax._
 import pureconfig.ConfigSource

@@ -4,11 +4,9 @@ import cats.effect.Sync
 import cats.implicits._
 import io.chrisdavenport.log4cats.Logger
 import io.circe.generic.auto._
-import io.circe.syntax._
 import io.github.kirill5k.agg.common.JsonCodecs
 import io.github.kirill5k.agg.common.errors.EnquiryNotFound
 import io.github.kirill5k.agg.enquiry.EnquiryController.{CreateEnquiryRequest, CreateEnquiryResponse, ErrorResponse}
-import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{HttpRoutes, MessageFailure, Response}
 
