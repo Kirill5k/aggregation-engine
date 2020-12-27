@@ -18,7 +18,7 @@ trait EnquiryStore[F[_]] {
   def getQuotes(id: EnquiryId): Stream[F, Quote]
 }
 
-private final class InMemoryEnquiryStore[F[_]: Concurrent](
+final private class InMemoryEnquiryStore[F[_]: Concurrent](
     private val enquiries: Ref[F, Map[EnquiryId, Enquiry]],
     private val quotes: Ref[F, Map[EnquiryId, NoneTerminatedQueue[F, Quote]]]
 ) extends EnquiryStore[F] {
@@ -41,16 +41,18 @@ private final class InMemoryEnquiryStore[F[_]: Concurrent](
     enquiries.get.map(_.keySet.contains(id))
 
   override def complete(id: EnquiryId): F[Unit] =
-    get(id).flatMap { enquiry =>
-      enquiries.update(_ + (id -> enquiry.copy(status = "completed"))) *>
-        quotes.get.map(_(id)).flatMap(_.enqueue1(None))
-    }
+    for {
+      enquiry <- get(id)
+      _       <- enquiries.update(_ + (id -> enquiry.copy(status = "completed")))
+      _       <- quotes.getAndUpdate(_.removed(id)).map(_(id)).flatMap(_.enqueue1(None))
+    } yield ()
 
   override def addQuote(id: EnquiryId)(quote: Quote): F[Unit] =
-    get(id).flatMap { enquiry =>
-      enquiries.update(_ + (id -> enquiry.copy(quotes = quote :: enquiry.quotes))) *>
-        quotes.get.map(_(id)).flatMap(_.enqueue1(Some(quote)))
-    }
+    for {
+      enquiry <- get(id)
+      _       <- enquiries.update(_ + (id -> enquiry.copy(quotes = quote :: enquiry.quotes)))
+      _       <- quotes.get.map(_(id)).flatMap(_.enqueue1(Some(quote)))
+    } yield ()
 
   override def getQuotes(id: EnquiryId): Stream[F, Quote] =
     Stream
@@ -58,15 +60,15 @@ private final class InMemoryEnquiryStore[F[_]: Concurrent](
       .flatMap { es =>
         es.get(id) match {
           case Some(enquiry) if enquiry.status == "completed" => Stream.emits(enquiry.quotes)
-          case Some(_) => Stream.eval(quotes.get).flatMap(_(id).dequeue)
-          case None => Stream.empty
+          case Some(_)                                        => Stream.eval(quotes.get).flatMap(_(id).dequeue)
+          case None                                           => Stream.empty
         }
       }
 }
 
 object EnquiryStore {
   def inMemory[F[_]: Concurrent]: F[EnquiryStore[F]] = {
-    def enquiries: F[Ref[F, Map[EnquiryId, Enquiry]]] = Ref.of(Map.empty)
+    def enquiries: F[Ref[F, Map[EnquiryId, Enquiry]]]                    = Ref.of(Map.empty)
     def quotes: F[Ref[F, Map[EnquiryId, NoneTerminatedQueue[F, Quote]]]] = Ref.of(Map.empty)
     (enquiries, quotes).mapN((e, q) => new InMemoryEnquiryStore[F](e, q))
   }
