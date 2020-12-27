@@ -1,0 +1,24 @@
+package io.github.kirill5k.agg.common
+
+import cats.effect.{Blocker, ContextShift, Sync}
+import pureconfig._
+import pureconfig.generic.auto._
+import pureconfig.module.catseffect.syntax._
+import pureconfig.ConfigSource
+
+object config {
+
+  final case class ServerConfig(
+      host: String,
+      port: Int
+  )
+
+  final case class AppConfig(
+      server: ServerConfig
+  )
+
+  object AppConfig {
+    def load[F[_]: Sync: ContextShift](blocker: Blocker): F[AppConfig] =
+      ConfigSource.default.loadF[F, AppConfig](blocker)
+  }
+}

@@ -39,13 +39,13 @@ final class EnquiryController[F[_]](
     response.handleErrorWith {
       case error: EnquiryNotFound =>
         l.error(error.message) *>
-          NotFound(ErrorResponse(error.message).asJson)
+          NotFound(ErrorResponse(error.message))
       case error: MessageFailure =>
         l.error(error)("error parsing json") *>
-          BadRequest(ErrorResponse(error.getMessage()).asJson)
+          BadRequest(ErrorResponse(error.getMessage()))
       case error =>
         l.error(error)("unexpected error") *>
-          InternalServerError(ErrorResponse(error.getMessage()).asJson)
+          InternalServerError(ErrorResponse(error.getMessage()))
     }
 }
 
