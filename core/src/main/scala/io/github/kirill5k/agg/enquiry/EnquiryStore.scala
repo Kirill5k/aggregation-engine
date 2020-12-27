@@ -54,9 +54,13 @@ private final class InMemoryEnquiryStore[F[_]: Concurrent](
 
   override def getQuotes(id: EnquiryId): Stream[F, Quote] =
     Stream
-      .eval(quotes.get)
-      .flatMap { qs =>
-        qs.get(id).map(_.dequeue).getOrElse(Stream.empty)
+      .eval(enquiries.get)
+      .flatMap { es =>
+        es.get(id) match {
+          case Some(enquiry) if enquiry.status == "completed" => Stream.emits(enquiry.quotes)
+          case Some(_) => Stream.eval(quotes.get).flatMap(_(id).dequeue)
+          case None => Stream.empty
+        }
       }
 }
 
