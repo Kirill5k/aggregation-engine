@@ -62,4 +62,7 @@ object EnquiryController {
   )
 
   final case class ErrorResponse(message: String)
+
+  def make[F[_]: Sync: Logger](service: EnquiryService[F]): F[EnquiryController[F]] =
+    Sync[F].delay(new EnquiryController[F](service))
 }
