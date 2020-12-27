@@ -1,15 +1,13 @@
 package io.github.kirill5k.agg.enquiry
 
-import cats.effect.{Concurrent, Sync}
+import cats.effect.Concurrent
 import cats.effect.implicits._
 import cats.implicits._
 import fs2.Stream
 
-import java.util.UUID
-
 trait EnquiryService[F[_]] {
-  def get(id: EnquiryId): F[EnquiryId]
   def create(query: Query): F[EnquiryId]
+  def get(id: EnquiryId): F[Enquiry]
   def exists(id: EnquiryId): F[Boolean]
   def getQuotes(id: EnquiryId): Stream[F, Quote]
 }
@@ -23,8 +21,7 @@ final class LiveEnquiryService[F[_]](
 
   override def create(query: Query): F[EnquiryId] =
     for {
-      id <- F.delay(EnquiryId(UUID.randomUUID().toString))
-      _  <- enquiryStore.save(Enquiry(id, "processing", query, Nil))
+      id  <- enquiryStore.create(query)
       _ <- Stream
         .bracket(F.pure(id))(enquiryStore.complete)
         .flatMap(_ => providerClient.queryAll(query).evalTap(enquiryStore.addQuote(id)))
@@ -39,7 +36,7 @@ final class LiveEnquiryService[F[_]](
   override def getQuotes(id: EnquiryId): Stream[F, Quote] =
     enquiryStore.getQuotes(id)
 
-  override def get(id: EnquiryId): F[EnquiryId] =
+  override def get(id: EnquiryId): F[Enquiry] =
     enquiryStore.get(id)
 }
 

@@ -7,8 +7,10 @@ import fs2.Stream
 import fs2.concurrent.{NoneTerminatedQueue, Queue}
 import io.github.kirill5k.agg.common.errors.EnquiryNotFound
 
+import java.util.UUID
+
 trait EnquiryStore[F[_]] {
-  def save(enquiry: Enquiry): F[Unit]
+  def create(query: Query): F[EnquiryId]
   def get(id: EnquiryId): F[Enquiry]
   def exists(id: EnquiryId): F[Boolean]
   def complete(id: EnquiryId): F[Unit]
@@ -21,17 +23,18 @@ final class InMemoryEnquiryStore[F[_]: Concurrent](
     private val quotes: Ref[F, Map[EnquiryId, NoneTerminatedQueue[F, Quote]]]
 ) extends EnquiryStore[F] {
 
-  override def save(enquiry: Enquiry): F[Unit] =
+  override def create(query: Query): F[EnquiryId] =
     for {
-      _     <- enquiries.update(_ + (enquiry.id -> enquiry))
+      id    <- Concurrent[F].delay(EnquiryId(UUID.randomUUID().toString))
+      _     <- enquiries.update(_ + (id -> Enquiry(id, "processing", query, Nil)))
       queue <- Queue.noneTerminated[F, Quote]
-      _     <- quotes.update(_ + (enquiry.id -> queue))
-    } yield ()
+      _     <- quotes.update(_ + (id -> queue))
+    } yield id
 
   override def get(id: EnquiryId): F[Enquiry] =
     enquiries.get.map(_.get(id)).flatMap {
       case Some(enquiry) => enquiry.pure[F]
-      case None => EnquiryNotFound(id).raiseError[F, Enquiry]
+      case None          => EnquiryNotFound(id).raiseError[F, Enquiry]
     }
 
   override def exists(id: EnquiryId): F[Boolean] =
