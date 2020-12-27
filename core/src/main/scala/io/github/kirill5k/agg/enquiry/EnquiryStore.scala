@@ -9,7 +9,7 @@ import io.github.kirill5k.agg.common.errors.EnquiryNotFound
 
 trait EnquiryStore[F[_]] {
   def save(enquiry: Enquiry): F[Unit]
-  def get(id: EnquiryId): F[Option[Enquiry]]
+  def get(id: EnquiryId): F[Enquiry]
   def exists(id: EnquiryId): F[Boolean]
   def complete(id: EnquiryId): F[Unit]
   def addQuote(id: EnquiryId)(quote: Quote): F[Unit]
