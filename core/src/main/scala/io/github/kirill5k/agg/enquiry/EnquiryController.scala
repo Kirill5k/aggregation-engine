@@ -28,6 +28,10 @@ final class EnquiryController[F[_]](
           res     <- Created(CreateEnquiryResponse(id))
         } yield res
       }
+    case GET -> Root / "enquiries" / id =>
+      withErrorHandling {
+        Ok(service.get(EnquiryId(id)))
+      }
     case GET -> Root / "enquiries" / id / "quotes" =>
       withErrorHandling {
         F.ensure(service.exists(EnquiryId(id)))(EnquiryNotFound(EnquiryId(id)))(identity) *>

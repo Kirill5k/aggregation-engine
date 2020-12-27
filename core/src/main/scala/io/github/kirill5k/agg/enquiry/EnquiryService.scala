@@ -8,6 +8,7 @@ import fs2.Stream
 import java.util.UUID
 
 trait EnquiryService[F[_]] {
+  def get(id: EnquiryId): F[Option[EnquiryId]]
   def create(query: Query): F[EnquiryId]
   def exists(id: EnquiryId): F[Boolean]
   def getQuotes(id: EnquiryId): Stream[F, Quote]
