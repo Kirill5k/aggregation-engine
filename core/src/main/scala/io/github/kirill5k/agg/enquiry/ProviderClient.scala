@@ -37,5 +37,6 @@ private final class MockProviderClient[F[_]: Timer](implicit
 }
 
 object ProviderClient {
-  def mock[F[_]: Concurrent: Timer: Logger]: F[ProviderClient[F]] = ???
+  def mock[F[_]: Concurrent: Timer: Logger]: F[ProviderClient[F]] =
+    Concurrent[F].delay(new MockProviderClient[F])
 }

@@ -61,5 +61,9 @@ private final class InMemoryEnquiryStore[F[_]: Concurrent](
 }
 
 object EnquiryStore {
-  def inMemory[F[_]: Concurrent]: F[EnquiryStore[F]] = ???
+  def inMemory[F[_]: Concurrent]: F[EnquiryStore[F]] = {
+    def enquiries: F[Ref[F, Map[EnquiryId, Enquiry]]] = Ref.of(Map.empty)
+    def quotes: F[Ref[F, Map[EnquiryId, NoneTerminatedQueue[F, Quote]]]] = Ref.of(Map.empty)
+    (enquiries, quotes).mapN((e, q) => new InMemoryEnquiryStore[F](e, q))
+  }
 }
