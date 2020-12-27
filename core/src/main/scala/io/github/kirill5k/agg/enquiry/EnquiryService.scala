@@ -12,7 +12,7 @@ trait EnquiryService[F[_]] {
   def getQuotes(id: EnquiryId): Stream[F, Quote]
 }
 
-final class LiveEnquiryService[F[_]](
+private final class LiveEnquiryService[F[_]](
     private val providerClient: ProviderClient[F],
     private val enquiryStore: EnquiryStore[F]
 )(implicit

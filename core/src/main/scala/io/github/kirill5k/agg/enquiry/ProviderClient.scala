@@ -12,7 +12,7 @@ trait ProviderClient[F[_]] {
   def queryAll(query: Query): Stream[F, Quote]
 }
 
-final class MockProviderClient[F[_]: Timer](implicit
+private final class MockProviderClient[F[_]: Timer](implicit
     val F: Concurrent[F],
     val T: Timer[F],
     val L: Logger[F]
@@ -34,4 +34,8 @@ final class MockProviderClient[F[_]: Timer](implicit
       .map(p => Stream.eval(queryProvider(p, query)))
       .parJoinUnbounded
       .evalTap(q => L.info(s"received quote from ${q.providerName} for query by ${query.firstName} ${query.lastName}"))
+}
+
+object ProviderClient {
+  def mock[F[_]: Concurrent: Timer: Logger]: F[ProviderClient[F]] = ???
 }

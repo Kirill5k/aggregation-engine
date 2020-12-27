@@ -18,7 +18,7 @@ trait EnquiryStore[F[_]] {
   def getQuotes(id: EnquiryId): Stream[F, Quote]
 }
 
-final class InMemoryEnquiryStore[F[_]: Concurrent](
+private final class InMemoryEnquiryStore[F[_]: Concurrent](
     private val enquiries: Ref[F, Map[EnquiryId, Enquiry]],
     private val quotes: Ref[F, Map[EnquiryId, NoneTerminatedQueue[F, Quote]]]
 ) extends EnquiryStore[F] {
@@ -58,4 +58,8 @@ final class InMemoryEnquiryStore[F[_]: Concurrent](
       .flatMap { qs =>
         qs.get(id).map(_.dequeue).getOrElse(Stream.empty)
       }
+}
+
+object EnquiryStore {
+  def inMemory[F[_]: Concurrent]: F[EnquiryStore[F]] = ???
 }
