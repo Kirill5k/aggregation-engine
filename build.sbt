@@ -10,6 +10,15 @@ lazy val noPublish = Seq(
   publish / skip := true
 )
 
+lazy val docker = Seq(
+  packageName := moduleName.value,
+  version := version.value,
+  maintainer := "immotional@aol.com",
+  dockerBaseImage := "adoptopenjdk/openjdk15-openj9:debianslim-jre",
+  dockerUpdateLatest := true,
+  makeBatScripts := List()
+)
+
 lazy val root = (project in file("."))
   .settings(noPublish)
   .settings(
@@ -18,6 +27,8 @@ lazy val root = (project in file("."))
   .aggregate(core)
 
 lazy val core = (project in file("core"))
+  .enablePlugins(JavaAppPackaging, JavaAgent, DockerPlugin)
+  .settings(docker)
   .settings(
     name := "aggregation-engine-core",
     moduleName := "aggregation-engine-core",

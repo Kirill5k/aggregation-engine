@@ -13,10 +13,10 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.{HttpRoutes, MessageFailure, Response}
 
 final class EnquiryController[F[_]](
-    service: EnquiryService[F]
+    private val service: EnquiryService[F]
 )(implicit
     F: Sync[F],
-    l: Logger[F]
+    L: Logger[F]
 ) extends Http4sDsl[F] with JsonCodecs {
 
   def routes: HttpRoutes[F] = HttpRoutes.of[F] {
@@ -38,13 +38,13 @@ final class EnquiryController[F[_]](
   private def withErrorHandling(response: => F[Response[F]]): F[Response[F]] =
     response.handleErrorWith {
       case error: EnquiryNotFound =>
-        l.error(error.message) *>
+        L.error(error.message) *>
           NotFound(ErrorResponse(error.message))
       case error: MessageFailure =>
-        l.error(error)("error parsing json") *>
+        L.error(error)("error parsing json") *>
           BadRequest(ErrorResponse(error.getMessage()))
       case error =>
-        l.error(error)("unexpected error") *>
+        L.error(error)("unexpected error") *>
           InternalServerError(ErrorResponse(error.getMessage()))
     }
 }

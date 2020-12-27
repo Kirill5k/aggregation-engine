@@ -14,6 +14,7 @@ final case class Quote(
 
 final case class Enquiry(
     id: EnquiryId,
+    status: String,
     query: Query,
     quotes: List[Quote]
 )
