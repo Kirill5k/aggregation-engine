@@ -12,17 +12,18 @@ trait EnquiryService[F[_]] {
   def getQuotes(id: EnquiryId): Stream[F, Quote]
 }
 
-private final class LiveEnquiryService[F[_]: Concurrent](
+final private class LiveEnquiryService[F[_]: Concurrent](
     private val providerClient: ProviderClient[F],
     private val enquiryStore: EnquiryStore[F]
 ) extends EnquiryService[F] {
 
   override def create(query: Query): F[EnquiryId] =
     for {
-      id  <- enquiryStore.create(query)
-      _ <- Stream
-        .bracket(id.pure[F])(enquiryStore.complete)
-        .flatMap(_ => providerClient.queryAll(query).evalMap(enquiryStore.addQuote(id)))
+      id <- enquiryStore.create(query)
+      _ <- providerClient
+        .queryAll(query)
+        .evalMap(enquiryStore.addQuote(id))
+        .onFinalize(enquiryStore.complete(id))
         .compile
         .drain
         .start
