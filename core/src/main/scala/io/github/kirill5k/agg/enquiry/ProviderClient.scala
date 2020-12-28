@@ -23,7 +23,8 @@ private final class MockProviderClient[F[_]: Timer](implicit
   private def queryProvider(providerName: String, query: Query): F[Quote] =
     L.info(s"querying provider $providerName for query by ${query.firstName} ${query.lastName}") *>
       T.sleep(rand.nextInt(15000).millis) *>
-      F.delay(Quote(providerName, BigDecimal(rand.nextInt(20) + rand.nextDouble())))
+      F.delay(Quote(providerName, BigDecimal(rand.nextInt(20) + rand.nextDouble()))) <*
+      L.info(s"received quote from $providerName for query by ${query.firstName} ${query.lastName}")
 
   override def queryAll(query: Query): Stream[F, Quote] =
     Stream
@@ -31,7 +32,6 @@ private final class MockProviderClient[F[_]: Timer](implicit
       .covary[F]
       .map(p => Stream.eval(queryProvider(p, query)))
       .parJoinUnbounded
-      .evalTap(q => L.info(s"received quote from ${q.providerName} for query by ${query.firstName} ${query.lastName}"))
 }
 
 object ProviderClient {
